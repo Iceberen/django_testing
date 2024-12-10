@@ -1,57 +1,48 @@
 from http import HTTPStatus
 
-from django.urls import reverse
-
 import pytest
 from pytest_django.asserts import assertRedirects
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    'name, args',
-    (
-        ('news:home', None),
-        ('news:detail', pytest.lazy_fixture('news_id_for_args')),
-        ('users:login', None),
-        ('users:logout', None),
-        ('users:signup', None),
-    )
-)
-def test_pages_availability_for_anonymous_user(client, name, args):
-    url = reverse(name, args=args)
-    response = client.get(url)
-    assert response.status_code == HTTPStatus.OK
 
 
 @pytest.mark.parametrize(
     'parametrized_client, expected_status',
     (
-        (pytest.lazy_fixture('not_author_client'), HTTPStatus.NOT_FOUND),
+        (pytest.lazy_fixture('not_author_client'), HTTPStatus.OK),
         (pytest.lazy_fixture('author_client'), HTTPStatus.OK),
     ),
 )
 @pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
+    'url',
+    (
+        pytest.lazy_fixture('url_news_home'),
+        pytest.lazy_fixture('url_news_detail'),
+        pytest.lazy_fixture('url_news_edit'),
+        pytest.lazy_fixture('url_news_delete'),
+        pytest.lazy_fixture('url_users_login'),
+        pytest.lazy_fixture('url_users_logout'),
+        pytest.lazy_fixture('url_users_signup'),
+    )
 )
-def test_availability_for_comment_edit_and_delete(
-    parametrized_client, expected_status, name, comment
+def test_pages_availability(
+    url, parametrized_client, expected_status, not_author_client,
+    url_news_edit, url_news_delete
 ):
-    url = reverse(name, args=(comment.id,))
+    if ((parametrized_client == not_author_client)
+        and (url == url_news_edit or url == url_news_delete
+             )):
+        expected_status = HTTPStatus.NOT_FOUND
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
 
 
 @pytest.mark.parametrize(
-    'name, args',
+    'url',
     (
-        ('news:edit', pytest.lazy_fixture('comment_id_for_args')),
-        ('news:delete', pytest.lazy_fixture('comment_id_for_args')),
+        pytest.lazy_fixture('url_news_edit'),
+        pytest.lazy_fixture('url_news_delete'),
     ),
 )
-def test_redirect_for_anonymous_client(client, name, args):
-    login_url = reverse('users:login')
-    url = reverse(name, args=args)
-    expected_url = f'{login_url}?next={url}'
+def test_redirect_for_anonymous_client(client, url, url_users_login):
+    expected_url = f'{url_users_login}?next={url}'
     response = client.get(url)
     assertRedirects(response, expected_url)

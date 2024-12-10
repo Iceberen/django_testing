@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 
 import pytest
-
 from django.conf import settings
 from django.test.client import Client
 from django.utils import timezone
+from django.urls import reverse
 
 from news.models import News, Comment
 
@@ -20,10 +20,9 @@ def not_author(django_user_model):
 
 
 @pytest.fixture
-def author_client(author):  # Вызываем фикстуру автора.
-    # Создаём новый экземпляр клиента, чтобы не менять глобальный.
+def author_client(author):
     client = Client()
-    client.force_login(author)  # Логиним автора в клиенте.
+    client.force_login(author)
     return client
 
 
@@ -86,3 +85,38 @@ def all_comments(db, news, author):
         )
         comment.created = now + timedelta(days=index)
         comment.save()
+
+
+@pytest.fixture
+def url_news_home():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def url_news_detail(news):
+    return reverse('news:detail', args=(news.id,))
+
+
+@pytest.fixture
+def url_news_delete(comment):
+    return reverse('news:delete', args=(comment.id,))
+
+
+@pytest.fixture
+def url_news_edit(comment):
+    return reverse('news:edit', args=(comment.id,))
+
+
+@pytest.fixture
+def url_users_login(comment):
+    return reverse('users:login')
+
+
+@pytest.fixture
+def url_users_logout(comment):
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def url_users_signup(comment):
+    return reverse('users:signup')
