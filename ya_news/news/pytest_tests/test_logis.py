@@ -23,7 +23,7 @@ def test_user_can_create_comment(author, author_client, news, url_news_detail):
     assertRedirects(response, f'{url_news_detail}#comments')
     comments_count_new = Comment.objects.count()
     assert comments_count_old + 1 == comments_count_new
-    comment = Comment.objects.get()
+    comment = Comment.objects.get(id=news.id)
     assert comment.text == DATA_FORM['text']
     assert comment.news == news
     assert comment.author == author

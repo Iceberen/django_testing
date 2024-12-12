@@ -20,6 +20,11 @@ def not_author(django_user_model):
 
 
 @pytest.fixture
+def client():
+    return Client()
+
+
+@pytest.fixture
 def author_client(author):
     client = Client()
     client.force_login(author)
@@ -43,11 +48,6 @@ def news(db):
 
 
 @pytest.fixture
-def news_id_for_args(news):
-    return (news.id,)
-
-
-@pytest.fixture
 def comment(news, author):
     comment = Comment.objects.create(
         news=news,
@@ -55,11 +55,6 @@ def comment(news, author):
         text='Текст комментария',
     )
     return comment
-
-
-@pytest.fixture
-def comment_id_for_args(db, comment):
-    return (comment.id,)
 
 
 @pytest.fixture

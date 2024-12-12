@@ -9,6 +9,7 @@ from pytest_django.asserts import assertRedirects
     (
         (pytest.lazy_fixture('not_author_client'), HTTPStatus.OK),
         (pytest.lazy_fixture('author_client'), HTTPStatus.OK),
+        (pytest.lazy_fixture('client'), HTTPStatus.OK),
     ),
 )
 @pytest.mark.parametrize(
@@ -25,12 +26,16 @@ from pytest_django.asserts import assertRedirects
 )
 def test_pages_availability(
     url, parametrized_client, expected_status, not_author_client,
-    url_news_edit, url_news_delete
+    url_news_edit, url_news_delete, client
 ):
-    if ((parametrized_client == not_author_client)
+    if (parametrized_client == not_author_client
         and (url == url_news_edit or url == url_news_delete
              )):
         expected_status = HTTPStatus.NOT_FOUND
+    if (parametrized_client == client
+        and (url == url_news_edit or url == url_news_delete
+             )):
+        expected_status = HTTPStatus.FOUND
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
 

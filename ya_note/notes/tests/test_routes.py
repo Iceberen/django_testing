@@ -1,50 +1,47 @@
 from http import HTTPStatus
 
-from .common import SetUp
+from .common import SetUpTestDataClass
 
 
-class TestRoutes(SetUp):
+class TestRoutes(SetUpTestDataClass):
 
     def test_pages_availability(self):
-        urls_anonym = (
-            (self.url_notes_home, HTTPStatus.OK),
-            (self.url_users_login, HTTPStatus.OK),
-            (self.url_users_logout, HTTPStatus.OK),
-            (self.url_users_signup, HTTPStatus.OK),
-        )
-        for url, status in urls_anonym:
-            with self.subTest(url=url):
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, status)
-
-        urls_auth = (
-            (self.url_notes_list, HTTPStatus.OK),
-            (self.url_notes_add, HTTPStatus.OK),
-            (self.url_notes_success, HTTPStatus.OK),
-        )
-        self.client.force_login(self.author)
-        for url, status in urls_auth:
-            with self.subTest(url=url):
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, status)
-
-        users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND),
-        )
-        url_diff = (
+        """Тест доступности страниц"""
+        urls = (
+            self.url_notes_home,
+            self.url_users_login,
+            self.url_users_logout,
+            self.url_users_signup,
+            self.url_notes_list,
+            self.url_notes_add,
+            self.url_notes_success,
             self.url_notes_detail,
             self.url_notes_edit,
             self.url_notes_delete,
         )
+
+        users_statuses = (
+            (self.author, HTTPStatus.OK),
+            (self.reader, HTTPStatus.OK),
+            (None, HTTPStatus.OK),
+        )
+
         for user, status in users_statuses:
-            self.client.force_login(user)
-            for url in url_diff:
-                with self.subTest(url=url):
+            for url in urls:
+                with self.subTest(user=user):
+                    if user is not None:
+                        self.client.force_login(user)
+                    if (user == self.reader
+                        and (url == self.url_notes_edit
+                             or url == self.url_notes_detail)):
+                        status = HTTPStatus.NOT_FOUND
+                    if user is None and url in (urls[4:]):
+                        status = HTTPStatus.FOUND
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
 
     def test_redirects(self):
+        """Тест редиректов"""
         urls = (
             self.url_notes_detail,
             self.url_notes_edit,

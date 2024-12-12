@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.test.client import Client
 
 from notes.models import Note
 
@@ -8,7 +9,7 @@ from notes.models import Note
 User = get_user_model()
 
 
-class SetUp(TestCase):
+class SetUpTestDataClass(TestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -31,3 +32,8 @@ class SetUp(TestCase):
             'text': 'Новый текст',
             'slug': 'new-slug'
         }
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
+        cls.reader_client = Client()
+        cls.reader_client.force_login(cls.reader)
+        cls.guest_client = Client()
