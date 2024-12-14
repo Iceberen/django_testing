@@ -23,7 +23,7 @@ def test_user_can_create_comment(author, author_client, news, url_news_detail):
     assertRedirects(response, f'{url_news_detail}#comments')
     comments_count_new = Comment.objects.count()
     assert comments_count_old + 1 == comments_count_new
-    comment = Comment.objects.last()
+    comment = Comment.objects.latest('id')
     assert comment.text == DATA_FORM['text']
     assert comment.news == news
     assert comment.author == author
@@ -45,18 +45,22 @@ def test_author_can_delete_comment(author_client, url_news_delete,
     assertRedirects(response, f'{url_news_detail}#comments')
     comments_count_new = Comment.objects.count()
     assert comments_count_old - 1 == comments_count_new
-    assert comment not in Comment.objects.all()
+    assert (Comment.objects.filter(
+        news=comment.news,
+        author=comment.author,
+        text=comment.text,
+    ).exists() is False)
 
 
 def test_user_cant_delete_comment_of_another_user(
     not_author_client, comment, news, author, url_news_delete
 ):
     comments_count_old = Comment.objects.count()
-    comment = Comment.objects.get(id=comment.id)
     response = not_author_client.delete(url_news_delete)
     assert response.status_code == HTTPStatus.NOT_FOUND
     comments_count_new = Comment.objects.count()
     assert comments_count_old == comments_count_new
+    comment = Comment.objects.get(id=comment.id)
     assert comment.text == DATA_FORM['text']
     assert comment.news == news
     assert comment.author == author
@@ -67,7 +71,7 @@ def test_author_can_edit_comment(author, author_client, news, comment,
     comments_count_old = Comment.objects.count()
     response = author_client.post(url_news_edit, data=DATA_FORM_NEW)
     assertRedirects(response, f'{url_news_detail}#comments')
-    comment = Comment.objects.last()
+    comment = Comment.objects.get(id=comment.id)
     comments_count_new = Comment.objects.count()
     assert comments_count_old == comments_count_new
     assert comment.text == DATA_FORM_NEW['text']
@@ -83,7 +87,7 @@ def test_user_cant_edit_comment_of_another_user(
     assert response.status_code == HTTPStatus.NOT_FOUND
     comments_count_new = Comment.objects.count()
     assert comments_count_old == comments_count_new
-    last_comment = Comment.objects.last()
+    last_comment = Comment.objects.get(id=comment.id)
     assert last_comment.text == comment.text
     assert last_comment.news == comment.news
     assert last_comment.author == comment.author
