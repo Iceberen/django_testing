@@ -20,11 +20,6 @@ def not_author(django_user_model):
 
 
 @pytest.fixture
-def client():
-    return Client()
-
-
-@pytest.fixture
 def author_client(author):
     client = Client()
     client.force_login(author)

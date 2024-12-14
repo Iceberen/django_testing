@@ -17,7 +17,7 @@ class TestCommentCreation(SetUpTestDataClass):
         self.assertRedirects(response, self.url_notes_success)
         note_count_new = Note.objects.count()
         self.assertEqual(note_count_new - note_count_old, 1)
-        new_note = Note.objects.last()
+        new_note = Note.objects.get(title=self.form_data['title'])
         self.assertEqual(new_note.title, self.form_data['title'])
         self.assertEqual(new_note.text, self.form_data['text'])
         self.assertEqual(new_note.slug, self.form_data['slug'])
@@ -91,6 +91,7 @@ class TestCommentCreation(SetUpTestDataClass):
         self.assertRedirects(response, self.url_notes_success)
         note_count_new = Note.objects.count()
         self.assertEqual(note_count_old, note_count_new + 1)
+        self.assertNotIn(self.note, Note.objects.all())
 
     def test_other_user_cant_delete_note(self):
         """Тест не возможности удаления заметки гостем"""
@@ -99,3 +100,7 @@ class TestCommentCreation(SetUpTestDataClass):
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         note_count_new = Note.objects.count()
         self.assertEqual(note_count_old, note_count_new)
+        note_from_db = Note.objects.get(title=self.note.title)
+        self.assertEqual(self.note.title, note_from_db.title)
+        self.assertEqual(self.note.text, note_from_db.text)
+        self.assertEqual(self.note.slug, note_from_db.slug)

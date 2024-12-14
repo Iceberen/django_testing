@@ -23,7 +23,7 @@ def test_user_can_create_comment(author, author_client, news, url_news_detail):
     assertRedirects(response, f'{url_news_detail}#comments')
     comments_count_new = Comment.objects.count()
     assert comments_count_old + 1 == comments_count_new
-    comment = Comment.objects.get(id=news.id)
+    comment = Comment.objects.last()
     assert comment.text == DATA_FORM['text']
     assert comment.news == news
     assert comment.author == author
@@ -38,17 +38,14 @@ def test_user_cant_use_bad_words(author_client, url_news_detail):
     assert comments_count_old == comments_count_new
 
 
-def test_author_can_delete_comment(author, author_client, url_news_delete,
-                                   url_news_detail, comment, news):
+def test_author_can_delete_comment(author_client, url_news_delete,
+                                   url_news_detail, comment):
     comments_count_old = Comment.objects.count()
-    comment = Comment.objects.get(id=comment.id)
     response = author_client.delete(url_news_delete)
     assertRedirects(response, f'{url_news_detail}#comments')
     comments_count_new = Comment.objects.count()
     assert comments_count_old - 1 == comments_count_new
-    assert comment.text == DATA_FORM['text']
-    assert comment.news == news
-    assert comment.author == author
+    assert comment not in Comment.objects.all()
 
 
 def test_user_cant_delete_comment_of_another_user(
@@ -70,7 +67,7 @@ def test_author_can_edit_comment(author, author_client, news, comment,
     comments_count_old = Comment.objects.count()
     response = author_client.post(url_news_edit, data=DATA_FORM_NEW)
     assertRedirects(response, f'{url_news_detail}#comments')
-    comment = Comment.objects.get(id=comment.id)
+    comment = Comment.objects.last()
     comments_count_new = Comment.objects.count()
     assert comments_count_old == comments_count_new
     assert comment.text == DATA_FORM_NEW['text']
@@ -79,14 +76,14 @@ def test_author_can_edit_comment(author, author_client, news, comment,
 
 
 def test_user_cant_edit_comment_of_another_user(
-    author, not_author_client, news, comment, url_news_edit
+    not_author_client, comment, url_news_edit
 ):
     comments_count_old = Comment.objects.count()
     response = not_author_client.post(url_news_edit, data=DATA_FORM_NEW)
     assert response.status_code == HTTPStatus.NOT_FOUND
     comments_count_new = Comment.objects.count()
     assert comments_count_old == comments_count_new
-    comment = Comment.objects.get(id=comment.id)
-    assert comment.text == DATA_FORM['text']
-    assert comment.news == news
-    assert comment.author == author
+    last_comment = Comment.objects.last()
+    assert last_comment.text == comment.text
+    assert last_comment.news == comment.news
+    assert last_comment.author == comment.author

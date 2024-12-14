@@ -1,6 +1,7 @@
+from http import HTTPStatus
+
 from notes.forms import NoteForm
 from .common import SetUpTestDataClass
-from http import HTTPStatus
 
 
 class TestHomePage(SetUpTestDataClass):

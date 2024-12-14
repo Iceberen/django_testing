@@ -22,6 +22,7 @@ class SetUpTestDataClass(TestCase):
         cls.url_users_signup = reverse('users:signup')
         cls.author = User.objects.create(username='Лев Толстой')
         cls.reader = User.objects.create(username='Читатель простой')
+        cls.user = User
         cls.note = Note.objects.create(title='Заголовок', text='Текст',
                                        author=cls.author)
         cls.url_notes_edit = reverse('notes:edit', args=(cls.note.slug,))
@@ -36,4 +37,3 @@ class SetUpTestDataClass(TestCase):
         cls.author_client.force_login(cls.author)
         cls.reader_client = Client()
         cls.reader_client.force_login(cls.reader)
-        cls.guest_client = Client()
