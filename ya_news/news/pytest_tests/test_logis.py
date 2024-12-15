@@ -17,13 +17,16 @@ def test_anonymous_user_cant_create_comment(client, url_news_detail):
     assert comments_count_old == comments_count_new
 
 
-def test_user_can_create_comment(author, author_client, news, url_news_detail):
+def test_user_can_create_comment(news, author, author_client, url_news_detail):
     comments_count_old = Comment.objects.count()
+    list_id_old = list(Comment.objects.values_list('id'))
     response = author_client.post(url_news_detail, data=DATA_FORM)
     assertRedirects(response, f'{url_news_detail}#comments')
+    list_id_new = list(Comment.objects.values_list('id', flat=True))
     comments_count_new = Comment.objects.count()
     assert comments_count_old + 1 == comments_count_new
-    comment = Comment.objects.latest('id')
+    assert len(list_id_new) - len(list_id_old) == 1
+    comment = Comment.objects.get()
     assert comment.text == DATA_FORM['text']
     assert comment.news == news
     assert comment.author == author
@@ -45,11 +48,7 @@ def test_author_can_delete_comment(author_client, url_news_delete,
     assertRedirects(response, f'{url_news_detail}#comments')
     comments_count_new = Comment.objects.count()
     assert comments_count_old - 1 == comments_count_new
-    assert (Comment.objects.filter(
-        news=comment.news,
-        author=comment.author,
-        text=comment.text,
-    ).exists() is False)
+    assert (Comment.objects.filter(id=comment.id).exists() is False)
 
 
 def test_user_cant_delete_comment_of_another_user(
