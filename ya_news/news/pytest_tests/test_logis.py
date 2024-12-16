@@ -26,7 +26,8 @@ def test_user_can_create_comment(news, author, author_client, url_news_detail):
     comments_count_new = Comment.objects.count()
     assert comments_count_old + 1 == comments_count_new
     assert len(list_id_new) - len(list_id_old) == 1
-    comment = Comment.objects.get()
+    new_comment_id = list(set(list_id_new) - set(list_id_old))[0]
+    comment = Comment.objects.get(id=new_comment_id)
     assert comment.text == DATA_FORM['text']
     assert comment.news == news
     assert comment.author == author

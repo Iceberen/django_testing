@@ -12,12 +12,16 @@ class TestCommentCreation(SetUpTestDataClass):
     def test_user_can_create_note(self):
         """Тест возможности создания заметки автором"""
         note_count_old = Note.objects.count()
+        list_id_old = list(Note.objects.values_list('id', flat=True))
         response = self.author_client.post(self.url_notes_add,
                                            data=self.form_data)
         self.assertRedirects(response, self.url_notes_success)
         note_count_new = Note.objects.count()
+        list_id_new = list(Note.objects.values_list('id', flat=True))
         self.assertEqual(note_count_new - note_count_old, 1)
-        new_note = Note.objects.get(title=self.form_data['title'])
+        self.assertEqual(len(list_id_new) - len(list_id_old), 1)
+        new_note_id = list(set(list_id_new) - set(list_id_old))[0]
+        new_note = Note.objects.get(id=new_note_id)
         self.assertEqual(new_note.title, self.form_data['title'])
         self.assertEqual(new_note.text, self.form_data['text'])
         self.assertEqual(new_note.slug, self.form_data['slug'])
@@ -50,13 +54,17 @@ class TestCommentCreation(SetUpTestDataClass):
     def test_empty_slug(self):
         """Тест создания заметки с пустым слагом"""
         note_count_old = Note.objects.count()
+        list_id_old = list(Note.objects.values_list('id', flat=True))
         self.form_data.pop('slug')
         response = self.author_client.post(self.url_notes_add,
                                            data=self.form_data)
         self.assertRedirects(response, self.url_notes_success)
         note_count_new = Note.objects.count()
+        list_id_new = list(Note.objects.values_list('id', flat=True))
         self.assertEqual(note_count_old + 1, note_count_new)
-        new_note = Note.objects.get(id=note_count_old + 1)
+        self.assertEqual(len(list_id_new) - len(list_id_old), 1)
+        new_note_id = list(set(list_id_new) - set(list_id_old))[0]
+        new_note = Note.objects.get(id=new_note_id)
         expected_slug = slugify(self.form_data['title'])
         self.assertEqual(new_note.slug, expected_slug)
 
@@ -96,11 +104,14 @@ class TestCommentCreation(SetUpTestDataClass):
     def test_other_user_cant_delete_note(self):
         """Тест не возможности удаления заметки гостем"""
         note_count_old = Note.objects.count()
+        list_id_old = list(Note.objects.values_list('id', flat=True))
         response = self.client.post(self.url_notes_delete)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         note_count_new = Note.objects.count()
+        list_id_new = list(Note.objects.values_list('id', flat=True))
         self.assertEqual(note_count_old, note_count_new)
-        note_from_db = Note.objects.get(title=self.note.title)
+        self.assertEqual(list_id_new, list_id_old)
+        note_from_db = Note.objects.get(id=self.note.id)
         self.assertEqual(self.note.title, note_from_db.title)
         self.assertEqual(self.note.text, note_from_db.text)
         self.assertEqual(self.note.slug, note_from_db.slug)
